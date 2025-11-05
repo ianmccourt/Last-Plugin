@@ -1,0 +1,118 @@
+{
+  "example_presets": [
+    {
+      "name": "Ethereal Ambient",
+      "description": "ethereal, floating, otherworldly",
+      "preset": {
+        "name": "Ethereal Ambient",
+        "notes": "Floating, otherworldly soundscape with shimmer reverb and infinite delay. Perfect for ambient guitar textures.",
+        "chain": [
+          {"block": "noise_gate", "enabled": true, "params": {"threshold_db": -65, "release_ms": 200}},
+          {"block": "compressor", "enabled": true, "params": {"ratio": 2.5, "threshold_db": -25, "attack_ms": 20, "release_ms": 150, "makeup_db": 3}},
+          {"block": "drive", "enabled": true, "params": {"type": "softclip", "drive": 0.2, "tone": 0.7, "oversample": 2}},
+          {"block": "amp", "enabled": true, "params": {"model": "clean_blackface", "gain": 0.3, "bass": 0.4, "mid": 0.5, "treble": 0.7, "presence": 0.6, "master": 0.8}},
+          {"block": "cab", "enabled": true, "params": {"ir_name": "2x12_open", "lo_cut_hz": 80, "hi_cut_hz": 8000}},
+          {"block": "chorus", "enabled": true, "params": {"rate_hz": 0.3, "depth": 0.4, "mix": 0.3}},
+          {"block": "delay", "enabled": true, "params": {"time_ms": 650, "feedback": 0.85, "mix": 0.6}},
+          {"block": "reverb", "enabled": true, "params": {"algo": "shimmer", "pre_delay_ms": 25, "decay_s": 10.5, "damping": 0.2, "mix": 0.7}},
+          {"block": "eq", "enabled": true, "params": {"low_shelf_hz": 100, "low_gain_db": -2, "mid_hz": 1500, "mid_q": 0.8, "mid_gain_db": 1, "high_shelf_hz": 6000, "high_gain_db": 2}}
+        ]
+      }
+    },
+    {
+      "name": "Industrial Chaos",
+      "description": "industrial, harsh, mechanical, aggressive",
+      "preset": {
+        "name": "Industrial Chaos",
+        "notes": "Aggressive industrial tone with maximum fuzz saturation and harsh processing. Great for experimental and noise music.",
+        "chain": [
+          {"block": "noise_gate", "enabled": true, "params": {"threshold_db": -45, "release_ms": 50}},
+          {"block": "compressor", "enabled": true, "params": {"ratio": 8, "threshold_db": -15, "attack_ms": 0.5, "release_ms": 30, "makeup_db": 8}},
+          {"block": "drive", "enabled": true, "params": {"type": "fuzz", "drive": 0.95, "tone": 0.3, "oversample": 4}},
+          {"block": "amp", "enabled": true, "params": {"model": "hi_gain", "gain": 0.9, "bass": 0.8, "mid": 0.3, "treble": 0.9, "presence": 0.8, "master": 0.7}},
+          {"block": "cab", "enabled": true, "params": {"ir_name": "4x12_closed", "lo_cut_hz": 120, "hi_cut_hz": 6000}},
+          {"block": "chorus", "enabled": false, "params": {"rate_hz": 0.5, "depth": 0.2, "mix": 0.1}},
+          {"block": "delay", "enabled": true, "params": {"time_ms": 180, "feedback": 0.7, "mix": 0.4}},
+          {"block": "reverb", "enabled": true, "params": {"algo": "room", "pre_delay_ms": 5, "decay_s": 2.8, "damping": 0.8, "mix": 0.25}},
+          {"block": "eq", "enabled": true, "params": {"low_shelf_hz": 80, "low_gain_db": -6, "mid_hz": 800, "mid_q": 2.5, "mid_gain_db": -8, "high_shelf_hz": 8000, "high_gain_db": 4}}
+        ]
+      }
+    },
+    {
+      "name": "Underwater Dreams",
+      "description": "underwater, muffled, dreamy, submerged",
+      "preset": {
+        "name": "Underwater Dreams",
+        "notes": "Submerged, muffled soundscape with heavy modulation and filtered tones. Creates an underwater listening experience.",
+        "chain": [
+          {"block": "noise_gate", "enabled": true, "params": {"threshold_db": -70, "release_ms": 300}},
+          {"block": "compressor", "enabled": true, "params": {"ratio": 4, "threshold_db": -20, "attack_ms": 15, "release_ms": 200, "makeup_db": 5}},
+          {"block": "drive", "enabled": true, "params": {"type": "softclip", "drive": 0.4, "tone": 0.2, "oversample": 2}},
+          {"block": "amp", "enabled": true, "params": {"model": "clean_blackface", "gain": 0.4, "bass": 0.8, "mid": 0.6, "treble": 0.2, "presence": 0.3, "master": 0.7}},
+          {"block": "cab", "enabled": true, "params": {"ir_name": "1x12_open", "lo_cut_hz": 60, "hi_cut_hz": 4500}},
+          {"block": "chorus", "enabled": true, "params": {"rate_hz": 0.8, "depth": 0.85, "mix": 0.7}},
+          {"block": "delay", "enabled": true, "params": {"time_ms": 420, "feedback": 0.75, "mix": 0.5}},
+          {"block": "reverb", "enabled": true, "params": {"algo": "hall", "pre_delay_ms": 35, "decay_s": 8.2, "damping": 0.7, "mix": 0.6}},
+          {"block": "eq", "enabled": true, "params": {"low_shelf_hz": 120, "low_gain_db": 3, "mid_hz": 1000, "mid_q": 1.2, "mid_gain_db": -4, "high_shelf_hz": 5000, "high_gain_db": -8}}
+        ]
+      }
+    },
+    {
+      "name": "Crystalline Sparkle",
+      "description": "crystalline, bright, sparkling, clean",
+      "preset": {
+        "name": "Crystalline Sparkle",
+        "notes": "Ultra-clean, bright tone with shimmer reverb and fast modulation. Perfect for ambient picking and arpeggios.",
+        "chain": [
+          {"block": "noise_gate", "enabled": true, "params": {"threshold_db": -75, "release_ms": 150}},
+          {"block": "compressor", "enabled": true, "params": {"ratio": 2, "threshold_db": -30, "attack_ms": 5, "release_ms": 100, "makeup_db": 2}},
+          {"block": "drive", "enabled": false, "params": {"type": "softclip", "drive": 0.1, "tone": 0.8, "oversample": 1}},
+          {"block": "amp", "enabled": true, "params": {"model": "clean_blackface", "gain": 0.2, "bass": 0.3, "mid": 0.4, "treble": 0.9, "presence": 0.8, "master": 0.8}},
+          {"block": "cab", "enabled": true, "params": {"ir_name": "2x12_open", "lo_cut_hz": 70, "hi_cut_hz": 10000}},
+          {"block": "chorus", "enabled": true, "params": {"rate_hz": 3.2, "depth": 0.6, "mix": 0.4}},
+          {"block": "delay", "enabled": true, "params": {"time_ms": 280, "feedback": 0.4, "mix": 0.3}},
+          {"block": "reverb", "enabled": true, "params": {"algo": "shimmer", "pre_delay_ms": 15, "decay_s": 6.5, "damping": 0.1, "mix": 0.5}},
+          {"block": "eq", "enabled": true, "params": {"low_shelf_hz": 80, "low_gain_db": -1, "mid_hz": 2000, "mid_q": 0.7, "mid_gain_db": 2, "high_shelf_hz": 7000, "high_gain_db": 4}}
+        ]
+      }
+    },
+    {
+      "name": "Broken Transmission",
+      "description": "broken radio, lo-fi, distorted, vintage",
+      "preset": {
+        "name": "Broken Transmission",
+        "notes": "Lo-fi radio transmission effect with extreme EQ and compression. Sounds like a signal from another dimension.",
+        "chain": [
+          {"block": "noise_gate", "enabled": true, "params": {"threshold_db": -50, "release_ms": 80}},
+          {"block": "compressor", "enabled": true, "params": {"ratio": 10, "threshold_db": -12, "attack_ms": 0.2, "release_ms": 20, "makeup_db": 10}},
+          {"block": "drive", "enabled": true, "params": {"type": "fuzz", "drive": 0.8, "tone": 0.4, "oversample": 2}},
+          {"block": "amp", "enabled": true, "params": {"model": "brit_crunch", "gain": 0.7, "bass": 0.2, "mid": 0.9, "treble": 0.6, "presence": 0.5, "master": 0.6}},
+          {"block": "cab", "enabled": true, "params": {"ir_name": "1x12_open", "lo_cut_hz": 150, "hi_cut_hz": 5000}},
+          {"block": "chorus", "enabled": false, "params": {"rate_hz": 0.5, "depth": 0.2, "mix": 0.1}},
+          {"block": "delay", "enabled": true, "params": {"time_ms": 120, "feedback": 0.85, "mix": 0.4}},
+          {"block": "reverb", "enabled": true, "params": {"algo": "room", "pre_delay_ms": 8, "decay_s": 1.5, "damping": 0.9, "mix": 0.3}},
+          {"block": "eq", "enabled": true, "params": {"low_shelf_hz": 200, "low_gain_db": -10, "mid_hz": 1200, "mid_q": 3.5, "mid_gain_db": 8, "high_shelf_hz": 4000, "high_gain_db": -12}}
+        ]
+      }
+    },
+    {
+      "name": "Cosmic Voyage",
+      "description": "cosmic, space, vast, infinite",
+      "preset": {
+        "name": "Cosmic Voyage",
+        "notes": "Expansive cosmic soundscape with infinite reverb and slow modulation. Perfect for space-themed ambient music.",
+        "chain": [
+          {"block": "noise_gate", "enabled": true, "params": {"threshold_db": -80, "release_ms": 400}},
+          {"block": "compressor", "enabled": true, "params": {"ratio": 3, "threshold_db": -28, "attack_ms": 25, "release_ms": 250, "makeup_db": 4}},
+          {"block": "drive", "enabled": true, "params": {"type": "softclip", "drive": 0.3, "tone": 0.6, "oversample": 2}},
+          {"block": "amp", "enabled": true, "params": {"model": "clean_blackface", "gain": 0.35, "bass": 0.5, "mid": 0.4, "treble": 0.7, "presence": 0.6, "master": 0.75}},
+          {"block": "cab", "enabled": true, "params": {"ir_name": "2x12_open", "lo_cut_hz": 60, "hi_cut_hz": 9000}},
+          {"block": "chorus", "enabled": true, "params": {"rate_hz": 0.15, "depth": 0.7, "mix": 0.5}},
+          {"block": "delay", "enabled": true, "params": {"time_ms": 800, "feedback": 0.8, "mix": 0.6}},
+          {"block": "reverb", "enabled": true, "params": {"algo": "shimmer", "pre_delay_ms": 40, "decay_s": 12, "damping": 0.15, "mix": 0.8}},
+          {"block": "eq", "enabled": true, "params": {"low_shelf_hz": 90, "low_gain_db": -1, "mid_hz": 1800, "mid_q": 0.6, "mid_gain_db": 1.5, "high_shelf_hz": 6500, "high_gain_db": 2.5}}
+        ]
+      }
+    }
+  ]
+}

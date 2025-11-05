@@ -1,0 +1,178 @@
+# Build directories
+build/
+cmake-build-*/
+out/
+*.xcodeproj/
+*.xcworkspace/
+DerivedData/
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+CMakeScripts/
+*.cmake
+!CMakeLists.txt
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+_deps/
+
+# Compiled binaries
+*.a
+*.lib
+*.dylib
+*.so
+*.dll
+*.exe
+*.app
+*.plugin
+*.component
+*.vst3
+*.vst
+*.aaxplugin
+*.framework
+
+# Object files
+*.o
+*.obj
+*.lo
+*.slo
+
+# IDE - Xcode
+*.xcodeproj/*
+!*.xcodeproj/project.pbxproj
+!*.xcodeproj/xcshareddata/
+*.xcworkspace/*
+!*.xcworkspace/contents.xcworkspacedata
+*.xcuserdata
+*.xcscmblueprint
+*.xcscheme
+!*.xcscheme/*.xcscheme
+xcuserdata/
+DerivedData/
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# IDE - Visual Studio Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# IDE - Visual Studio
+.vs/
+*.sln.docstates
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# IDE - CLion
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+# Keep package-lock.json for consistent installs
+# package-lock.json
+.npm
+.yarn-integrity
+.pnp
+.pnp.js
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+*.env
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.Spotlight-V100
+.Trashes
+*.swp
+*~.nib
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Linux
+*~
+.directory
+.Trash-*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# JUCE specific
+JuceLibraryCode/
+.juce/
+*.jucer.bak
+*.jucer.saved
+
+# Audio plugin artifacts
+*.plist
+*.entitlements
+!Info.plist
+*.nib
+*.strings
+*.storyboard
+*.xcdatamodel
+*.xcdatamodeld
+*.xcassets
+*.xcstrings
+
+# Logs
+*.log
+logs/
+*.out
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+*~
+*.orig
+
+# Testing
+coverage/
+.nyc_output/
+*.test.js.snap
+
+# Misc
+*.zip
+*.tar.gz
+*.rar
+.cache/
+temp/
+tmp/
+
+# Keep example files
+!preset-server/env.example
