@@ -81,7 +81,11 @@ private:
     std::atomic<float> eqHighParameter{0.5f};
     std::atomic<float> eqMidParameter{0.5f};
     std::atomic<float> eqLowParameter{0.5f};
-    
+
+    // Reverb state (instance-specific, not static!)
+    juce::AudioBuffer<float> reverbDelayBuffer{2, 4410}; // ~100ms at 44.1kHz
+    int reverbDelayIndex{0};
+
     // Helper methods
     void updateToneFilter();
     void updateEQFilters();

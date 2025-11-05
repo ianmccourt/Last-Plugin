@@ -14,14 +14,14 @@ void DSPChain::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
     currentSampleRate = sampleRate;
     currentSamplesPerBlock = samplesPerBlock;
-    
+
     // Initialize gain processor
     gainProcessor.reset(sampleRate, 0.05); // 50ms ramp time
     gainProcessor.setCurrentAndTargetValue(1.0f);
-    
+
     // Initialize tone filters
     updateToneFilter();
-    
+
     // Initialize drive/distortion
     driveGain.prepare({sampleRate, (juce::uint32)samplesPerBlock, 2});
     driveShaper.prepare({sampleRate, (juce::uint32)samplesPerBlock, 2});
@@ -29,13 +29,18 @@ void DSPChain::prepareToPlay(double sampleRate, int samplesPerBlock)
         // Soft clipping
         return juce::jlimit(-0.95f, 0.95f, input * (1.0f + input * input * 0.5f));
     };
-    
+
+    // Initialize reverb delay buffer (instance-specific)
+    int reverbBufferSize = static_cast<int>(sampleRate * 0.1); // 100ms at current sample rate
+    reverbDelayBuffer.setSize(2, reverbBufferSize, false, true, false); // Clear the buffer
+    reverbDelayIndex = 0;
+
     // Initialize delay
     delayLine.setMaximumDelayInSamples(static_cast<int>(sampleRate * 2.0)); // 2 second max delay
     delayLine.setDelay(static_cast<float>(sampleRate * 0.25)); // 250ms default
     delayMixer.prepare({sampleRate, (juce::uint32)samplesPerBlock, 2});
     delayMixer.setWetMixProportion(0.0f);
-    
+
     // Initialize chorus
     chorusProcessor.prepare({sampleRate, (juce::uint32)samplesPerBlock, 2});
     chorusProcessor.setRate(0.5f);
@@ -43,7 +48,7 @@ void DSPChain::prepareToPlay(double sampleRate, int samplesPerBlock)
     chorusProcessor.setCentreDelay(7.0f);
     chorusProcessor.setFeedback(0.0f);
     chorusProcessor.setMix(0.0f);
-    
+
     // Initialize EQ filters
     highPassFilterL.prepare({sampleRate, (juce::uint32)samplesPerBlock, 1});
     highPassFilterR.prepare({sampleRate, (juce::uint32)samplesPerBlock, 1});
@@ -51,7 +56,7 @@ void DSPChain::prepareToPlay(double sampleRate, int samplesPerBlock)
     lowPassFilterR.prepare({sampleRate, (juce::uint32)samplesPerBlock, 1});
     midFilterL.prepare({sampleRate, (juce::uint32)samplesPerBlock, 1});
     midFilterR.prepare({sampleRate, (juce::uint32)samplesPerBlock, 1});
-    
+
     // Set initial EQ parameters
     updateEQFilters();
 }
@@ -60,12 +65,16 @@ void DSPChain::processBlock(juce::AudioBuffer<float>& buffer)
 {
     if (bypassed)
         return;
-    
-    // Update parameters
-    auto gainValue = gainParameter.load();
-    auto driveValue = driveParameter.load();
-    auto reverbMixValue = reverbMixParameter.load();
-    auto reverbDecayValue = reverbDecayParameter.load();
+
+    // Safety check for buffer validity
+    if (buffer.getNumChannels() == 0 || buffer.getNumSamples() == 0)
+        return;
+
+    // Update parameters with safety clamping
+    auto gainValue = juce::jlimit(0.0f, 2.0f, gainParameter.load());
+    auto driveValue = juce::jlimit(0.0f, 1.0f, driveParameter.load());
+    auto reverbMixValue = juce::jlimit(0.0f, 1.0f, reverbMixParameter.load());
+    auto reverbDecayValue = juce::jlimit(0.0f, 1.0f, reverbDecayParameter.load());
     
     gainProcessor.setTargetValue(gainValue);
     
@@ -81,22 +90,22 @@ void DSPChain::processBlock(juce::AudioBuffer<float>& buffer)
     // Update drive gain
     driveGain.setGainLinear(1.0f + driveValue * 10.0f); // 1x to 11x gain
     
-    // Update delay parameters
-    auto delayTimeValue = delayTimeParameter.load();
-    auto delayMixValue = delayMixParameter.load();
+    // Update delay parameters with safety clamping
+    auto delayTimeValue = juce::jlimit(0.0f, 2.0f, delayTimeParameter.load());
+    auto delayMixValue = juce::jlimit(0.0f, 1.0f, delayMixParameter.load());
     delayLine.setDelay(static_cast<float>(currentSampleRate * delayTimeValue));
     delayMixer.setWetMixProportion(delayMixValue);
-    
-    // Update chorus parameters
-    auto chorusRateValue = chorusRateParameter.load();
-    auto chorusMixValue = chorusMixParameter.load();
+
+    // Update chorus parameters with safety clamping
+    auto chorusRateValue = juce::jlimit(0.1f, 5.0f, chorusRateParameter.load());
+    auto chorusMixValue = juce::jlimit(0.0f, 1.0f, chorusMixParameter.load());
     chorusProcessor.setRate(chorusRateValue);
     chorusProcessor.setMix(chorusMixValue);
-    
-    // Update EQ parameters
-    auto eqHighValue = eqHighParameter.load();
-    auto eqMidValue = eqMidParameter.load();
-    auto eqLowValue = eqLowParameter.load();
+
+    // Update EQ parameters with safety clamping
+    auto eqHighValue = juce::jlimit(0.0f, 1.0f, eqHighParameter.load());
+    auto eqMidValue = juce::jlimit(0.0f, 1.0f, eqMidParameter.load());
+    auto eqLowValue = juce::jlimit(0.0f, 1.0f, eqLowParameter.load());
     
     // Check if EQ parameters changed
     static float lastEQHigh = -1.0f, lastEQMid = -1.0f, lastEQLow = -1.0f;
@@ -147,36 +156,38 @@ void DSPChain::processBlock(juce::AudioBuffer<float>& buffer)
         {
             dryBuffer.copyFrom(channel, 0, buffer, channel, 0, buffer.getNumSamples());
         }
-        
-        // Simple delay-based reverb effect
-        static const int delaySamples = 4410; // ~100ms at 44.1kHz
-        static juce::AudioBuffer<float> delayBuffer(2, delaySamples);
-        static int delayIndex = 0;
-        
-        for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
+
+        // Simple delay-based reverb effect using instance variables
+        const int delaySamples = reverbDelayBuffer.getNumSamples();
+
+        for (int channel = 0; channel < juce::jmin(buffer.getNumChannels(), reverbDelayBuffer.getNumChannels()); ++channel)
         {
             auto* channelData = buffer.getWritePointer(channel);
-            auto* delayData = delayBuffer.getWritePointer(channel);
-            
+            auto* delayData = reverbDelayBuffer.getWritePointer(channel);
+            int localDelayIndex = reverbDelayIndex;
+
             for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
             {
                 // Get delayed sample
-                float delayedSample = delayData[delayIndex];
-                
+                float delayedSample = delayData[localDelayIndex];
+
                 // Mix current sample with delayed sample
                 float reverbSample = channelData[sample] + delayedSample * reverbDecayValue * 0.3f;
-                
+
                 // Store in delay buffer
-                delayData[delayIndex] = reverbSample;
-                
+                delayData[localDelayIndex] = reverbSample;
+
                 // Update delay index
-                delayIndex = (delayIndex + 1) % delaySamples;
-                
+                localDelayIndex = (localDelayIndex + 1) % delaySamples;
+
                 // Apply reverb mix
                 float dry = dryBuffer.getSample(channel, sample);
                 channelData[sample] = dry * (1.0f - reverbMixValue) + reverbSample * reverbMixValue;
             }
         }
+
+        // Update the instance delay index once after processing
+        reverbDelayIndex = (reverbDelayIndex + buffer.getNumSamples()) % delaySamples;
     }
     
     // Apply delay if enabled
@@ -250,7 +261,10 @@ void DSPChain::reset()
     gainProcessor.reset(currentSampleRate, 0.05);
     toneFilterL.reset();
     toneFilterR.reset();
-    // Note: Reverb uses static buffers, no reset needed
+
+    // Clear reverb delay buffer
+    reverbDelayBuffer.clear();
+    reverbDelayIndex = 0;
 }
 
 void DSPChain::setBypassed(bool shouldBeBypassed)

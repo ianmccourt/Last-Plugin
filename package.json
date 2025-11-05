@@ -1,6 +1,15 @@
 {
-  "dependencies": {
-    "cors": "^2.8.5",
-    "express": "^5.1.0"
-  }
+  "name": "ai-guitar-plugin-root",
+  "version": "1.0.0",
+  "description": "AI Guitar Plugin - Root dependencies",
+  "private": true,
+  "scripts": {
+    "build": "mkdir -p build && cd build && cmake .. && cmake --build .",
+    "server": "cd preset-server && npm start",
+    "install-server": "cd preset-server && npm install"
+  },
+  "devDependencies": {},
+  "keywords": ["guitar", "ai", "audio", "plugin"],
+  "author": "AI Guitar Co",
+  "license": "MIT"
 }

@@ -19,6 +19,11 @@ AIGuitarPluginAudioProcessor::AIGuitarPluginAudioProcessor()
 
 AIGuitarPluginAudioProcessor::~AIGuitarPluginAudioProcessor()
 {
+    // Signal that we're being destroyed
+    isBeingDestroyed.store(true);
+
+    // Wait for all background tasks to complete
+    threadPool.removeAllJobs(true, 5000); // Wait up to 5 seconds for jobs to finish
 }
 
 //==============================================================================
@@ -200,72 +205,95 @@ void AIGuitarPluginAudioProcessor::updateDSPFromParameters()
     // Update DSP chain from current parameter values
     auto* gainParam = parameters.getRawParameterValue("gain");
     auto* toneParam = parameters.getRawParameterValue("tone");
-    
+
+    // Null checks for safety
     if (gainParam != nullptr)
-        dspChain.setGain(*gainParam);
-        
+    {
+        float gainValue = juce::jlimit(0.0f, 2.0f, *gainParam);
+        dspChain.setGain(gainValue);
+    }
+
     if (toneParam != nullptr)
-        dspChain.setTone(*toneParam);
+    {
+        float toneValue = juce::jlimit(0.0f, 1.0f, *toneParam);
+        dspChain.setTone(toneValue);
+    }
 }
 
-// AI Preset Generation methods
-void AIGuitarPluginAudioProcessor::generatePresetFromText(const juce::String& description)
+// Helper class for thread pool jobs
+class PresetGenerationJob : public juce::ThreadPoolJob
 {
-    // For now, create a simple HTTP request to the AI server
-    // Use a lambda without complex captures to avoid compilation issues
-    auto task = [this, description]() -> void {
+public:
+    PresetGenerationJob(AIGuitarPluginAudioProcessor* proc, const juce::String& desc)
+        : juce::ThreadPoolJob("PresetGeneration"), processor(proc), description(desc)
+    {
+    }
+
+    JobStatus runJob() override
+    {
+        // Check if we should abort
+        if (shouldExit() || processor->isBeingDestroyed.load())
+            return jobHasFinished;
+
         try {
             DBG("Starting AI request for: " + description);
-            
+
             // Create the JSON request - use simple string construction
             auto postData = R"({"prompt":")" + description + R"("})";
-            
+
             DBG("POST data: " + postData);
-            
+
             // Create URL with POST data - try different approaches
             juce::URL url("http://127.0.0.1:8787/preset");  // Use 127.0.0.1 instead of localhost
             auto postUrl = url.withPOSTData(postData);
-            
+
             DBG("Request URL: " + postUrl.toString(true));
-            
+
             // Try the request with timeout and headers
             juce::String headers = "Content-Type: application/json\r\nAccept: application/json";
-            
+
             auto inputStream = postUrl.createInputStream(
                 juce::URL::InputStreamOptions(juce::URL::ParameterHandling::inPostData)
                     .withConnectionTimeoutMs(10000)
                     .withExtraHeaders(headers)
                     .withResponseHeaders(nullptr)
             );
-            
+
+            if (shouldExit() || processor->isBeingDestroyed.load())
+                return jobHasFinished;
+
             if (inputStream != nullptr)
             {
                 DBG("Successfully connected to AI server");
                 auto response = inputStream->readEntireStreamAsString();
-                
+
+                if (shouldExit() || processor->isBeingDestroyed.load())
+                    return jobHasFinished;
+
                 if (response.isNotEmpty())
                 {
                     DBG("Received response: " + response);
-                    
+
                     // Parse and apply the preset
                     auto presetJson = juce::JSON::parse(response);
                     if (presetJson.isObject())
                     {
                         DBG("Successfully parsed preset JSON");
-                        
+
                         // Apply the preset parameters - use a simpler approach
-                        juce::MessageManager::callAsync([this, presetJson, description]() -> void {
-                            this->applyPresetFromJson(presetJson, description);
+                        juce::MessageManager::callAsync([proc = processor, presetJson, desc = description]() {
+                            if (proc && !proc->isBeingDestroyed.load())
+                                proc->applyPresetFromJson(presetJson, desc);
                         });
                     }
                     else
                     {
                         DBG("Failed to parse preset JSON");
-                        juce::MessageManager::callAsync([description]() -> void {
+                        juce::MessageManager::callAsync([desc = description]() {
                             juce::AlertWindow::showMessageBoxAsync(
                                 juce::AlertWindow::WarningIcon,
                                 "AI Generation Error",
-                                "Failed to parse AI response for: " + description,
+                                "Failed to parse AI response for: " + desc,
                                 "OK");
                         });
                     }
@@ -273,13 +301,11 @@ void AIGuitarPluginAudioProcessor::generatePresetFromText(const juce::String& de
                 else
                 {
                     DBG("Empty response from AI server");
-                    // Handle empty response
-                    juce::MessageManager::callAsync([description]() -> void {
-                        DBG("Empty response from AI server for: " + description);
+                    juce::MessageManager::callAsync([desc = description]() {
                         juce::AlertWindow::showMessageBoxAsync(
                             juce::AlertWindow::WarningIcon,
                             "AI Generation Error",
-                            "Empty response from AI server for: " + description,
+                            "Empty response from AI server for: " + desc,
                             "OK");
                     });
                 }
@@ -287,13 +313,11 @@ void AIGuitarPluginAudioProcessor::generatePresetFromText(const juce::String& de
             else
             {
                 DBG("Failed to create input stream");
-                // Handle connection error
-                juce::MessageManager::callAsync([description]() -> void {
-                    DBG("Failed to connect to AI server for: " + description);
+                juce::MessageManager::callAsync([desc = description]() {
                     juce::AlertWindow::showMessageBoxAsync(
                         juce::AlertWindow::WarningIcon,
                         "AI Generation Error",
-                        "Failed to connect to AI server for: " + description + "\n\nMake sure the server is running on 127.0.0.1:8787\n\nThis might be a plugin sandboxing issue.",
+                        "Failed to connect to AI server for: " + desc + "\n\nMake sure the server is running on 127.0.0.1:8787",
                         "OK");
                 });
             }
@@ -301,20 +325,32 @@ void AIGuitarPluginAudioProcessor::generatePresetFromText(const juce::String& de
         catch (const std::exception& e)
         {
             DBG("Exception: " + juce::String(e.what()));
-            // Handle any other errors
-            juce::MessageManager::callAsync([description, e]() -> void {
-                DBG("Exception during AI request for " + description + ": " + e.what());
+            juce::MessageManager::callAsync([desc = description, error = juce::String(e.what())]() {
                 juce::AlertWindow::showMessageBoxAsync(
                     juce::AlertWindow::WarningIcon,
                     "AI Generation Error",
-                    "Exception during AI request for: " + description + "\n\nError: " + e.what(),
+                    "Exception during AI request for: " + desc + "\n\nError: " + error,
                     "OK");
             });
         }
-    };
-    
-    // Launch the task
-    juce::Thread::launch(task);
+
+        return jobHasFinished;
+    }
+
+private:
+    AIGuitarPluginAudioProcessor* processor;
+    juce::String description;
+};
+
+// AI Preset Generation methods
+void AIGuitarPluginAudioProcessor::generatePresetFromText(const juce::String& description)
+{
+    // Don't start new jobs if we're being destroyed
+    if (isBeingDestroyed.load())
+        return;
+
+    // Create and add job to thread pool
+    threadPool.addJob(new PresetGenerationJob(this, description), true);
 }
 
 void AIGuitarPluginAudioProcessor::generatePresetVariations(const juce::String& baseDescription, int count)
@@ -345,10 +381,21 @@ int AIGuitarPluginAudioProcessor::getGenerationQueueSize() const
 
 void AIGuitarPluginAudioProcessor::applyPresetFromJson(const juce::var& presetJson, const juce::String& description)
 {
+    // Safety check - don't apply if being destroyed
+    if (isBeingDestroyed.load())
+        return;
+
     DBG("Applying preset from JSON for: " + description);
-    
+
     try
     {
+        // Validate preset JSON
+        if (!presetJson.isObject())
+        {
+            DBG("Invalid preset JSON - not an object");
+            return;
+        }
+
         // Extract the chain array from the preset
         auto chain = presetJson["chain"];
         if (chain.isArray())
