@@ -63,17 +63,23 @@ public:
 private:
     // Parameter system
     juce::AudioProcessorValueTreeState parameters;
-    
+
     // DSP components
     DSPChain dspChain;
     ParameterSmoother parameterSmoother;
-    
+
     // Preset management
     PresetManager presetManager;
-    
+
+    // Thread pool for AI requests (max 2 concurrent requests)
+    juce::ThreadPool threadPool{2};
+
+    // Track if we're being destroyed
+    std::atomic<bool> isBeingDestroyed{false};
+
     // Parameter creation
     juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
     void updateDSPFromParameters();
-    
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AIGuitarPluginAudioProcessor)
 };
